@@ -1,0 +1,269 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meditation Timer</title><style>:root{font-family:system-ui,'Noto Sans Tamil',sans-serif;color:#173b35;background:#f2f8f4}*{box-sizing:border-box}body{margin:0;padding:22px 14px}.wrap{max-width:620px;margin:auto}.card{background:white;border-radius:24px;padding:24px;box-shadow:0 10px 35px #174b3320}h1{font-size:1.55rem;margin:0 0 7px}p{line-height:1.6}.muted{color:#648078}.timer{width:235px;height:235px;margin:24px auto;position:relative;display:grid;place-items:center}.timer svg{position:absolute;inset:0;transform:rotate(-90deg)}.timer .inner{text-align:center}.big{font-size:3.3rem;font-weight:750;font-variant-numeric:tabular-nums}.step{font-size:1.25rem;font-weight:700;text-align:center;margin:10px 0}.desc{text-align:center;min-height:70px}.buttons{display:flex;gap:10px;margin:18px 0}.buttons button{flex:1;border:0;border-radius:12px;padding:14px 9px;font-size:1rem;font-weight:700;cursor:pointer;background:#197b61;color:white}.buttons button.secondary{background:#e5f0e9;color:#225d4d}.settings{display:flex;flex-wrap:wrap;gap:16px;margin:16px 0;align-items:center}.settings label{display:flex;align-items:center;gap:7px}.settings select{font-size:1rem;padding:6px 8px;border-radius:8px;border:1px solid #c9dcd2;background:white;color:#173b35}.steps{padding:0;list-style:none}.steps li{display:flex;justify-content:space-between;border-top:1px solid #e6eee9;padding:12px 3px;gap:12px}.steps li.current{color:#0c805e;font-weight:750}.foot{font-size:.85rem;color:#658078}.pill{font-size:.8rem;background:#e0f4e9;padding:6px 10px;border-radius:99px;display:inline-block}</style></head><body><main class="wrap"><div class="card"><span class="pill" id="pill"></span><h1 id="title"></h1><p class="muted" id="subtitle"></p><div class="timer"><svg viewBox="0 0 235 235" width="235" height="235"><circle cx="117.5" cy="117.5" r="103" fill="none" stroke="#e6f0e9" stroke-width="12"/><circle id="progress" cx="117.5" cy="117.5" r="103" fill="none" stroke="#249675" stroke-width="12" stroke-linecap="round" stroke-dasharray="647.17" stroke-dashoffset="0"/></svg><div class="inner"><div class="big" id="clock">20:00</div><div class="muted" id="remainingLabel"></div><div id="stepClock"></div></div></div><div class="step" id="stepName"></div><p class="desc" id="description"></p><div class="buttons"><button id="start"></button><button class="secondary" id="reset"></button></div><div class="settings"><label><input type="checkbox" id="voice" checked> <span id="voiceLabel"></span></label><label><input type="checkbox" id="bell" checked> <span id="bellLabel"></span></label><label><span id="langLabel"></span> <select id="lang"><option value="en">English</option><option value="ta">தமிழ்</option><option value="hi">हिन्दी</option><option value="es">Español</option><option value="fr">Français</option><option value="zh">中文</option></select></label></div><p class="foot" id="status"></p><h2 id="heading"></h2><ol class="steps" id="steps"></ol><p class="foot" id="note"></p></div></main><script>
+const mins=[3,4,4,5,2,2];
+const T={
+en:{
+  htmlLang:'en', voiceCode:'en-US',
+  title:'20-Minute Meditation', pill:'🌿 Daily 5:00 – 5:20 AM', subtitle:'Guided Meditation • Automatic Timer',
+  remaining:'Time left', thisPart:'this part', start:'▶ Start', reset:'↺ Reset', pause:'⏸ Pause', resume:'▶ Resume', restart:'▶ Start again',
+  voiceLabel:'🔊 Guided voice', bellLabel:'🔔 Bell sound', langLabel:'🌐 Language',
+  idle:'Press Start and the six parts will change automatically.', running:'Meditation in progress.', paused:'Paused.', resetDone:'Reset.',
+  finished:'Meditation finished.', done:'Done', complete:'✓ Meditation complete', completeDesc:'You have finished today’s meditation. Well done!',
+  heading:'Meditation parts', minutes:'min', noVoice:'No English voice found on this device; follow the text on screen.', noSpeech:'Voice is not available in this browser.',
+  finalVoice:'Today’s twenty-minute meditation is complete. Thank you.',
+  note:'Note: The screen stays on during a session. If the screen locks, the time is still counted correctly, but the voice and bell only play if the device allows it. The English voice uses your device’s default text-to-speech engine.',
+  phases:[
+    {name:'Breathing',desc:'Breathe in slowly and breathe out. Keep your attention on your breath.',voice:'Part one. Breathing practice. Breathe in slowly and breathe out. Keep your attention on your breath.'},
+    {name:'Gratitude',desc:'Think of three things you would like to be thankful for today.',voice:'Part two. Gratitude. Think of three things you would like to be thankful for today.'},
+    {name:'Positive affirmations',desc:'I am growing every day. I use my time meaningfully.',voice:'Part three. Positive affirmations. I am growing every day. I use my time meaningfully. I act with awareness.'},
+    {name:'Visualization',desc:'Think of your goals and picture the actions you will take toward them today.',voice:'Part four. Visualization. Picture your goals in your mind. Imagine one action you will take toward them today.'},
+    {name:'Calm awareness',desc:'If thoughts arise, notice them and gently return to the present moment.',voice:'Part five. Calm awareness. Gently notice any thoughts that come, and return to this moment.'},
+    {name:'Today’s intention',desc:'Choose the one most important task you will do today.',voice:'Part six. Today’s intention. Choose the one most important task you will do today.'}
+  ]
+},
+ta:{
+  htmlLang:'ta', voiceCode:'ta-IN',
+  title:'20 நிமிட தியானம்', pill:'🌿 தினசரி காலை 5:00 – 5:20', subtitle:'Tamil Guided Meditation • Automatic Timer',
+  remaining:'மீதமுள்ள நேரம்', thisPart:'இந்தப் பகுதி', start:'▶ தொடங்கு', reset:'↺ மீட்டமை', pause:'⏸ இடைநிறுத்து', resume:'▶ தொடரவும்', restart:'▶ மீண்டும் தொடங்கு',
+  voiceLabel:'🔊 தமிழ் வழிகாட்டுதல்', bellLabel:'🔔 மணி ஒலி', langLabel:'🌐 மொழி',
+  idle:'Start அழுத்தியதும் ஆறு பகுதிகளும் தானாக மாறும்.', running:'தியானம் நடைபெறுகிறது.', paused:'இடைநிறுத்தப்பட்டுள்ளது.', resetDone:'மீட்டமைக்கப்பட்டது.',
+  finished:'தியானம் முடிந்தது.', done:'முடிந்தது', complete:'✓ தியானம் நிறைவடைந்தது', completeDesc:'இன்றைய தியானத்தை முடித்துவிட்டீர்கள். வாழ்த்துகள்!',
+  heading:'தியானப் பகுதிகள்', minutes:'நிமிடம்', noVoice:'இந்த சாதனத்தில் தமிழ் குரல் கிடைக்கவில்லை; திரையில் உள்ள உரையைப் பின்தொடருங்கள்.', noSpeech:'இந்த browser-ல் குரல் வசதி கிடைக்கவில்லை.',
+  finalVoice:'இன்றைய இருபது நிமிட தியானம் நிறைவடைந்தது. நன்றி.',
+  note:'குறிப்பு: தியானம் நடைபெறும்போது திரை தானாக அணையாமல் இருக்க முயற்சி செய்யப்படும். Screen lock ஆனாலும் நேரம் சரியாகக் கணக்கிடப்படும்; ஆனால் குரல் மற்றும் மணி ஒலி சாதனம் அனுமதித்தால் மட்டுமே ஒலிக்கும். தமிழ் குரல் உங்கள் சாதனத்தில் உள்ள Tamil text-to-speech voice-ஐப் பொறுத்தது.',
+  phases:[
+    {name:'மூச்சுப் பயிற்சி',desc:'மெதுவாக மூச்சை உள்ளிழுத்து வெளியே விடுங்கள். உங்கள் கவனத்தை மூச்சின் மீது வையுங்கள்.',voice:'முதல் பகுதி. மூச்சுப் பயிற்சி. மெதுவாக மூச்சை உள்ளிழுத்து வெளியே விடுங்கள். உங்கள் கவனத்தை மூச்சின் மீது வையுங்கள்.'},
+    {name:'நன்றியுணர்வு',desc:'இன்று நீங்கள் நன்றி சொல்ல விரும்பும் மூன்று விஷயங்களை நினையுங்கள்.',voice:'இரண்டாம் பகுதி. நன்றியுணர்வு. இன்று நன்றி சொல்ல விரும்பும் மூன்று விஷயங்களை நினைத்துப் பாருங்கள்.'},
+    {name:'நேர்மறை உறுதிமொழிகள்',desc:'நான் தினமும் முன்னேறுகிறேன். என் நேரத்தை அர்த்தமுள்ளதாகப் பயன்படுத்துகிறேன்.',voice:'மூன்றாம் பகுதி. நேர்மறை உறுதிமொழிகள். நான் தினமும் முன்னேறுகிறேன். என் நேரத்தை அர்த்தமுள்ளதாகப் பயன்படுத்துகிறேன். நான் கவனத்துடன் செயல்படுகிறேன்.'},
+    {name:'காட்சிப்படுத்தல்',desc:'உங்கள் இலக்குகளை நினைத்து, இன்று அவற்றை நோக்கி செய்யும் செயல்களை மனதில் பாருங்கள்.',voice:'நான்காம் பகுதி. காட்சிப்படுத்தல். உங்கள் இலக்குகளை மனக்கண்ணில் பாருங்கள். அவற்றை நோக்கி இன்று நீங்கள் செய்யும் ஒரு செயலைக் கற்பனை செய்யுங்கள்.'},
+    {name:'அமைதியான கவனிப்பு',desc:'எண்ணங்கள் வந்தால் அவற்றை கவனித்து மீண்டும் நிகழ்காலத்திற்குத் திரும்புங்கள்.',voice:'ஐந்தாம் பகுதி. அமைதியான கவனிப்பு. வரும் எண்ணங்களை மெதுவாகக் கவனித்து, மீண்டும் இந்த நிமிடத்திற்குத் திரும்புங்கள்.'},
+    {name:'இன்றைய நோக்கம்',desc:'இன்று செய்ய வேண்டிய மிக முக்கியமான ஒரு செயலைத் தேர்ந்தெடுங்கள்.',voice:'ஆறாம் பகுதி. இன்றைய நோக்கம். இன்று செய்ய வேண்டிய மிக முக்கியமான ஒரு செயலைத் தேர்ந்தெடுங்கள்.'}
+  ]
+},
+hi:{
+  htmlLang:'hi', voiceCode:'hi-IN',
+  title:'20 मिनट का ध्यान', pill:'🌿 रोज़ सुबह 5:00 – 5:20', subtitle:'निर्देशित ध्यान • स्वचालित टाइमर',
+  remaining:'शेष समय', thisPart:'इस भाग में', start:'▶ शुरू करें', reset:'↺ रीसेट करें', pause:'⏸ रोकें', resume:'▶ जारी रखें', restart:'▶ फिर से शुरू करें',
+  voiceLabel:'🔊 आवाज़ निर्देश', bellLabel:'🔔 घंटी की आवाज़', langLabel:'🌐 भाषा',
+  idle:'शुरू करें दबाते ही छह भाग अपने-आप बदल जाएँगे।', running:'ध्यान चल रहा है।', paused:'रुका हुआ है।', resetDone:'रीसेट कर दिया गया।',
+  finished:'ध्यान समाप्त हुआ।', done:'पूरा हुआ', complete:'✓ ध्यान पूरा हुआ', completeDesc:'आपने आज का ध्यान पूरा कर लिया है। बधाई!',
+  heading:'ध्यान के भाग', minutes:'मिनट', noVoice:'इस डिवाइस पर हिंदी आवाज़ नहीं मिली; स्क्रीन पर लिखे पाठ को पढ़ते रहें।', noSpeech:'इस ब्राउज़र में आवाज़ सुविधा उपलब्ध नहीं है।',
+  finalVoice:'आज का बीस मिनट का ध्यान पूरा हुआ। धन्यवाद।',
+  note:'नोट: ध्यान के दौरान स्क्रीन चालू रहती है। स्क्रीन बंद होने पर भी समय सही गिना जाता है, लेकिन आवाज़ और घंटी तभी बजेंगी जब डिवाइस अनुमति दे। हिंदी आवाज़ आपके डिवाइस के text-to-speech इंजन पर निर्भर करती है।',
+  phases:[
+    {name:'सांस का अभ्यास',desc:'धीरे-धीरे सांस अंदर लें और बाहर छोड़ें। अपना ध्यान सांस पर रखें।',voice:'पहला भाग। सांस का अभ्यास। धीरे-धीरे सांस अंदर लें और बाहर छोड़ें। अपना ध्यान सांस पर रखें।'},
+    {name:'कृतज्ञता',desc:'आज तीन ऐसी बातें सोचें जिनके लिए आप आभारी हैं।',voice:'दूसरा भाग। कृतज्ञता। आज तीन ऐसी बातें सोचें जिनके लिए आप आभारी हैं।'},
+    {name:'सकारात्मक पुष्टियाँ',desc:'मैं हर दिन बेहतर हो रहा हूँ। मैं अपने समय का सार्थक उपयोग करता हूँ।',voice:'तीसरा भाग। सकारात्मक पुष्टियाँ। मैं हर दिन बेहतर हो रहा हूँ। मैं अपने समय का सार्थक उपयोग करता हूँ। मैं सजगता से काम करता हूँ।'},
+    {name:'कल्पना-चित्रण',desc:'अपने लक्ष्यों को याद करें और आज उनकी ओर उठने वाले कदमों की कल्पना करें।',voice:'चौथा भाग। कल्पना-चित्रण। अपने लक्ष्यों को मन की आँखों से देखें। आज उनकी ओर उठने वाले एक कदम की कल्पना करें।'},
+    {name:'शांत सजगता',desc:'विचार आएँ तो उन्हें देखें और धीरे से वर्तमान क्षण में लौट आएँ।',voice:'पाँचवाँ भाग। शांत सजगता। आते हुए विचारों को धीरे से देखें, और फिर इसी क्षण में लौट आएँ।'},
+    {name:'आज का संकल्प',desc:'आज का सबसे ज़रूरी एक काम चुनें।',voice:'छठा भाग। आज का संकल्प। आज का सबसे ज़रूरी एक काम चुनें।'}
+  ]
+},
+es:{
+  htmlLang:'es', voiceCode:'es-ES',
+  title:'Meditación de 20 minutos', pill:'🌿 Diaria 5:00 – 5:20 a. m.', subtitle:'Meditación guiada • Temporizador automático',
+  remaining:'Tiempo restante', thisPart:'en esta parte', start:'▶ Iniciar', reset:'↺ Reiniciar', pause:'⏸ Pausar', resume:'▶ Reanudar', restart:'▶ Empezar de nuevo',
+  voiceLabel:'🔊 Voz guía', bellLabel:'🔔 Campana', langLabel:'🌐 Idioma',
+  idle:'Pulsa Iniciar y las seis partes cambiarán automáticamente.', running:'Meditación en curso.', paused:'En pausa.', resetDone:'Reiniciado.',
+  finished:'Meditación terminada.', done:'Terminado', complete:'✓ Meditación completada', completeDesc:'Has terminado la meditación de hoy. ¡Muy bien!',
+  heading:'Partes de la meditación', minutes:'min', noVoice:'No se encontró una voz en español en este dispositivo; sigue el texto en pantalla.', noSpeech:'La voz no está disponible en este navegador.',
+  finalVoice:'La meditación de veinte minutos de hoy ha terminado. Gracias.',
+  note:'Nota: La pantalla permanece encendida durante la sesión. Si la pantalla se bloquea, el tiempo se sigue contando correctamente, pero la voz y la campana solo suenan si el dispositivo lo permite. La voz en español depende del motor de texto a voz de tu dispositivo.',
+  phases:[
+    {name:'Respiración',desc:'Respira lentamente al inhalar y al exhalar. Mantén tu atención en la respiración.',voice:'Primera parte. Respiración. Respira lentamente al inhalar y al exhalar. Mantén tu atención en la respiración.'},
+    {name:'Gratitud',desc:'Piensa en tres cosas por las que quieras dar gracias hoy.',voice:'Segunda parte. Gratitud. Piensa en tres cosas por las que quieres dar gracias hoy.'},
+    {name:'Afirmaciones positivas',desc:'Estoy creciendo cada día. Uso mi tiempo con sentido.',voice:'Tercera parte. Afirmaciones positivas. Estoy creciendo cada día. Uso mi tiempo con sentido. Actúo con conciencia.'},
+    {name:'Visualización',desc:'Piensa en tus metas e imagina las acciones que darás hoy para alcanzarlas.',voice:'Cuarta parte. Visualización. Imagina tus metas en tu mente. Imagina una acción que vas a realizar hoy para acercarte a ellas.'},
+    {name:'Atención serena',desc:'Si surgen pensamientos, obsérvalos y vuelve suavemente al momento presente.',voice:'Quinta parte. Atención serena. Observa con calma los pensamientos que lleguen y vuelve a este momento.'},
+    {name:'Intención de hoy',desc:'Elige la tarea más importante que harás hoy.',voice:'Sexta parte. Intención de hoy. Elige la tarea más importante que harás hoy.'}
+  ]
+},
+fr:{
+  htmlLang:'fr', voiceCode:'fr-FR',
+  title:'Méditation de 20 minutes', pill:'🌿 Quotidien 5 h 00 – 5 h 20', subtitle:'Méditation guidée • Minuteur automatique',
+  remaining:'Temps restant', thisPart:'pour cette partie', start:'▶ Démarrer', reset:'↺ Réinitialiser', pause:'⏸ Pause', resume:'▶ Reprendre', restart:'▶ Recommencer',
+  voiceLabel:'🔊 Voix guide', bellLabel:'🔔 Son de cloche', langLabel:'🌐 Langue',
+  idle:'Appuyez sur Démarrer, les six parties s’enchaîneront automatiquement.', running:'Méditation en cours.', paused:'En pause.', resetDone:'Réinitialisé.',
+  finished:'Méditation terminée.', done:'Terminé', complete:'✓ Méditation terminée', completeDesc:'Vous avez terminé la méditation d’aujourd’hui. Bravo !',
+  heading:'Parties de la méditation', minutes:'min', noVoice:'Aucune voix française trouvée sur cet appareil ; suivez le texte à l’écran.', noSpeech:'La voix n’est pas disponible dans ce navigateur.',
+  finalVoice:'La méditation de vingt minutes d’aujourd’hui est terminée. Merci.',
+  note:'Remarque : l’écran reste allumé pendant la séance. Si l’écran se verrouille, le temps est tout de même compté correctement, mais la voix et la cloche ne sonnent que si l’appareil le permet. La voix française dépend du moteur de synthèse vocale de votre appareil.',
+  phases:[
+    {name:'Respiration',desc:'Inspirez lentement, puis expirez. Gardez votre attention sur votre souffle.',voice:'Première partie. Respiration. Inspirez lentement, puis expirez. Gardez votre attention sur votre souffle.'},
+    {name:'Gratitude',desc:'Pensez à trois choses pour lesquelles vous êtes reconnaissant aujourd’hui.',voice:'Deuxième partie. Gratitude. Pensez à trois choses pour lesquelles vous êtes reconnaissant aujourd’hui.'},
+    {name:'Affirmations positives',desc:'Je progresse chaque jour. J’utilise mon temps de façon utile.',voice:'Troisième partie. Affirmations positives. Je progresse chaque jour. J’utilise mon temps de façon utile. J’agis avec conscience.'},
+    {name:'Visualisation',desc:'Pensez à vos objectifs et imaginez les actions que vous mènerez aujourd’hui pour les atteindre.',voice:'Quatrième partie. Visualisation. Imaginez vos objectifs dans votre esprit. Imaginez une action que vous mènerez aujourd’hui pour les atteindre.'},
+    {name:'Attention calme',desc:'Si des pensées surgissent, remarquez-les et revenez doucement au moment présent.',voice:'Cinquième partie. Attention calme. Remarquez doucement les pensées qui surgissent, et revenez à cet instant.'},
+    {name:'Intention du jour',desc:'Choisissez la tâche la plus importante que vous ferez aujourd’hui.',voice:'Sixième partie. Intention du jour. Choisissez la tâche la plus importante que vous ferez aujourd’hui.'}
+  ]
+},
+zh:{
+  htmlLang:'zh', voiceCode:'zh-CN',
+  title:'20分钟冥想', pill:'🌿 每日 5:00 – 5:20', subtitle:'引导式冥想 • 自动计时',
+  remaining:'剩余时间', thisPart:'本段剩余', start:'▶ 开始', reset:'↺ 重置', pause:'⏸ 暂停', resume:'▶ 继续', restart:'▶ 重新开始',
+  voiceLabel:'🔊 语音引导', bellLabel:'🔔 提示铃声', langLabel:'🌐 语言',
+  idle:'按下开始，六个部分将自动切换。', running:'冥想进行中。', paused:'已暂停。', resetDone:'已重置。',
+  finished:'冥想结束。', done:'已完成', complete:'✓ 冥想完成', completeDesc:'您已完成今天的冥想，做得很好！',
+  heading:'冥想环节', minutes:'分钟', noVoice:'此设备上没有找到中文语音；请跟随屏幕上的文字。', noSpeech:'此浏览器不支持语音功能。',
+  finalVoice:'今天的二十分钟冥想已经完成。谢谢。',
+  note:'注意：冥想期间屏幕会保持常亮。如果屏幕锁定，时间仍会正确计算，但语音和铃声只有在设备允许时才会播放。中文语音取决于您设备的文字转语音引擎。',
+  phases:[
+    {name:'呼吸练习',desc:'缓慢地吸气，然后缓慢地呼气。把注意力放在呼吸上。',voice:'第一部分。呼吸练习。缓慢地吸气，然后缓慢地呼气。把注意力放在呼吸上。'},
+    {name:'感恩',desc:'想一想今天您想要感谢的三件事。',voice:'第二部分。感恩。想一想今天您想要感谢的三件事。'},
+    {name:'积极肯定',desc:'我每天都在进步。我有意义地使用我的时间。',voice:'第三部分。积极肯定。我每天都在进步。我有意义地使用我的时间。我用心行事。'},
+    {name:'意象想象',desc:'想想您的目标，在心中描绘今天为实现它们将采取的行动。',voice:'第四部分。意象想象。在脑海中描绘您的目标。想象您今天为实现目标将采取的一个行动。'},
+    {name:'平静觉察',desc:'如果有念头浮现，就留意它，然后轻轻回到当下。',voice:'第五部分。平静觉察。轻轻留意浮现的念头，然后回到此刻。'},
+    {name:'今日意图',desc:'选择今天最重要的一件事。',voice:'第六部分。今日意图。选择今天最重要的一件事。'}
+  ]
+}
+};
+const total=1200, offsets=[0];
+mins.forEach(m=>offsets.push(offsets.at(-1)+m*60));
+// Elapsed time is always derived from the wall clock (Date.now), so screen locks and
+// background tabs cannot make the session run longer than 20 minutes.
+let lang='en';
+try{const saved=localStorage.getItem('med_lang');if(saved&&T[saved])lang=saved}catch(e){}
+let base=0, startedAt=0, running=false, timer=0, current=-1, ctx=null, wakeLock=null, warnedVoice=false, statusKey='idle';
+const $=id=>document.getElementById(id);
+const S=()=>T[lang];
+const fmt=n=>{n=Math.max(0,Math.floor(n));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')};
+
+function setStatus(key){statusKey=key;$('status').textContent=S()[key]}
+
+function renderStatic(){
+  const s=S();
+  document.documentElement.lang=s.htmlLang;
+  document.title=s.title;
+  $('pill').textContent=s.pill;
+  $('title').textContent=s.title;
+  $('subtitle').textContent=s.subtitle;
+  $('remainingLabel').textContent=s.remaining;
+  $('voiceLabel').textContent=s.voiceLabel;
+  $('bellLabel').textContent=s.bellLabel;
+  $('langLabel').textContent=s.langLabel;
+  $('heading').textContent=s.heading;
+  $('note').textContent=s.note;
+  $('reset').textContent=s.reset;
+  $('steps').innerHTML=s.phases.map((p,i)=>`<li id="item${i}"><span>${i+1}. ${p.name}</span><span>${mins[i]} ${s.minutes}</span></li>`).join('');
+  $('lang').value=lang;
+  setStatus(statusKey);
+  draw();
+}
+
+function now(){return running?Math.min(total,base+(Date.now()-startedAt)/1000):base}
+function phaseIndex(e){for(let i=0;i<S().phases.length;i++)if(e<offsets[i+1])return i;return S().phases.length-1}
+
+function speak(t){
+  if(!$('voice').checked)return;
+  if(window.AndroidTTS){AndroidTTS.speak(t,lang);return}
+  if(!('speechSynthesis' in window)){setStatus('noSpeech');return}
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t);
+    u.lang=S().voiceCode;u.rate=.86;
+    const all=speechSynthesis.getVoices();
+    const v=all.find(v=>v.lang.toLowerCase().startsWith(lang));
+    if(v)u.voice=v;
+    else if(all.length&&!warnedVoice){warnedVoice=true;setStatus('noVoice')}
+    speechSynthesis.speak(u);
+  }catch(e){setStatus('noSpeech')}
+}
+
+// AudioContext must be created/resumed inside a user tap (Start) for iOS Safari to play sound.
+function ensureAudio(){try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();ctx.resume()}catch(e){}}
+function chime(){
+  if(!$('bell').checked||!ctx)return;
+  try{[660,880].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+i*.17;o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.14,t+.03);g.gain.exponentialRampToValueAtTime(.0001,t+1.2);o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+1.25)})}catch(e){}
+}
+
+async function keepAwake(on){
+  if(!('wakeLock' in navigator))return;
+  try{
+    if(on){if(!wakeLock||wakeLock.released)wakeLock=await navigator.wakeLock.request('screen')}
+    else if(wakeLock){await wakeLock.release();wakeLock=null}
+  }catch(e){}
+}
+
+function draw(e=now()){
+  const s=S(), i=phaseIndex(e), done=e>=total;
+  $('clock').textContent=fmt(total-e);
+  $('stepClock').textContent=done?s.done:fmt(offsets[i+1]-e)+' '+s.thisPart;
+  $('progress').setAttribute('stroke-dashoffset',647.17*e/total);
+  $('stepName').textContent=done?s.complete:`${i+1}. ${s.phases[i].name}`;
+  $('description').textContent=done?s.completeDesc:s.phases[i].desc;
+  s.phases.forEach((p,j)=>$('item'+j).classList.toggle('current',j===i&&!done));
+  $('start').textContent=running?s.pause:done?s.restart:e>0?s.resume:s.start;
+}
+
+// Announces the phase the clock is currently in. If the device was locked across
+// several phase boundaries, it jumps straight to the right phase instead of replaying each.
+function transition(e){
+  const i=phaseIndex(e);
+  if(e<total&&i!==current){
+    if(current!==-1)chime();
+    speak(S().phases[i].voice);
+    current=i;
+  }
+}
+
+function tick(){
+  const e=now();
+  if(e>=total){
+    stop(false);
+    chime();
+    speak(S().finalVoice);
+    setStatus('finished');
+  }else{
+    transition(e);
+  }
+  draw(e);
+}
+
+function start(){
+  if(running)return;
+  if(base>=total){base=0;current=-1}
+  ensureAudio();
+  startedAt=Date.now();running=true;
+  keepAwake(true);
+  setStatus('running');
+  tick();
+  timer=setInterval(tick,250);
+}
+
+// Stops the clock. Keeps the elapsed time in `base` so Start can resume it.
+function stop(cancelSpeech){
+  if(running){base=now();running=false}
+  clearInterval(timer);
+  keepAwake(false);
+  if(cancelSpeech){if(window.AndroidTTS)AndroidTTS.stop();else if('speechSynthesis' in window)speechSynthesis.cancel()}
+}
+
+$('start').onclick=()=>{
+  if(running){
+    stop(true);
+    setStatus('paused');
+    draw();
+  }else{
+    start();
+  }
+};
+
+$('reset').onclick=()=>{
+  stop(true);
+  base=0;current=-1;
+  setStatus('resetDone');
+  draw();
+};
+
+$('lang').onchange=e=>{
+  lang=e.target.value;
+  try{localStorage.setItem('med_lang',lang)}catch(err){}
+  renderStatic();
+};
+
+// Browsers release the wake lock when the page is hidden; re-request it when it returns.
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&running){keepAwake(true);tick()}
+});
+
+renderStatic();
+</script></body></html>
